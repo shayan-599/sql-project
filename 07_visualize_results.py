@@ -7,7 +7,7 @@ import mysql.connector
 import pandas as pd
 
 
-# ---------- Project folders ----------
+# --- Project folders ---
 # Path(__file__) means this current Python file.
 # .parent means the folder where this file is saved.
 project_folder = Path(__file__).resolve().parent
@@ -21,7 +21,7 @@ charts_folder.mkdir(parents=True, exist_ok=True)
 tables_folder.mkdir(parents=True, exist_ok=True)
 
 
-# ---------- Helper functions ----------
+# --- Helper functions ---
 def run_query(connection, query):
     """
     Send a SQL query to MySQL.
@@ -41,7 +41,7 @@ def save_csv(dataframe, filename):
     dataframe.to_csv(tables_folder / filename, index=False)
 
 
-# ---------- Query 1: Executive KPI summary ----------
+# --- Query 1: Executive KPI summary ---
 kpi_query = """
 SELECT
     ROUND(SUM(sales), 2) AS total_sales,
@@ -59,7 +59,7 @@ FROM orders;
 """
 
 
-# ---------- Query 2: Profit by region ----------
+# --- Query 2: profit by region ---
 region_query = """
 SELECT
     l.region,
@@ -78,7 +78,7 @@ ORDER BY total_profit DESC;
 """
 
 
-# ---------- Query 3: Category and sub-category profit ----------
+#--- Query 3: category and sub-category profit ---
 category_query = """
 SELECT
     p.category,
@@ -99,7 +99,7 @@ ORDER BY total_profit DESC;
 """
 
 
-# ---------- Query 4: Top 10 products by profit ----------
+# --- Query 4: top 10 products by profit ---
 top_products_query = """
 SELECT
     p.product_name,
@@ -122,7 +122,7 @@ LIMIT 10;
 """
 
 
-# ---------- Query 5: Loss-making products ----------
+#--- Query 5: Loss-making products ---
 loss_products_query = """
 SELECT
     p.product_name,
@@ -160,7 +160,7 @@ ORDER BY total_profit DESC;
 """
 
 
-# ---------- Query 7: Top 10 customers by sales ----------
+# ---------- Query 7: top 10 customers by sales ----------
 top_customers_query = """
 SELECT
     c.customer_name,
@@ -180,7 +180,7 @@ LIMIT 10;
 """
 
 
-# ---------- Query 8: Monthly sales and profit ----------
+# ---------- Query 8: monthly sales and profit ----------
 monthly_query = """
 SELECT
     o.order_month,
@@ -193,8 +193,7 @@ ORDER BY o.order_month;
 """
 
 
-# ---------- Connect to MySQL ----------
-# getpass hides your password while you type it.
+# --- Connect to mysql ---
 password = getpass("Enter your MySQL password: ")
 
 connection = mysql.connector.connect(
@@ -206,7 +205,7 @@ connection = mysql.connector.connect(
 )
 
 try:
-    # ---------- Run all eight queries ----------
+    # --- run all eight queries ---
     df_kpi = run_query(connection, kpi_query)
     df_region = run_query(connection, region_query)
     df_category = run_query(connection, category_query)
@@ -216,7 +215,7 @@ try:
     df_top_customers = run_query(connection, top_customers_query)
     df_monthly = run_query(connection, monthly_query)
 
-    # ---------- Save all query results as CSV ----------
+    # --- save all query results as csv ---
     save_csv(df_kpi, "executive_summary.csv")
     save_csv(df_region, "profit_by_region.csv")
     save_csv(df_category, "category_profit.csv")
@@ -230,12 +229,12 @@ try:
     print("\nExecutive KPI summary:")
     print(df_kpi.to_string(index=False))
 
-    # Convert MySQL number values into normal Python numbers for matplotlib.
+    # Convert mysql number values into normal python numbers for matplotlib.
     for dataframe in [df_region, df_category, df_products, df_monthly]:
         for column in ["total_sales", "total_profit"]:
             dataframe[column] = pd.to_numeric(dataframe[column])
 
-    # ---------- Chart 1: Profit by region ----------
+    # --- Chart 1: Profit by region ---
     region_chart = df_region.sort_values("total_profit")
 
     fig, ax = plt.subplots(figsize=(9, 5))
@@ -263,7 +262,7 @@ try:
     fig.savefig(charts_folder / "profit_by_region.png", dpi=180)
     plt.close(fig)
 
-    # ---------- Chart 2: Profit by category and sub-category ----------
+    # --- Chart 2: profit by category and sub-category---
     category_chart = df_category.sort_values("total_profit").copy()
 
     category_chart["label"] = (
@@ -272,7 +271,7 @@ try:
         + category_chart["sub_category"]
     )
 
-    # Losses are red; profitable groups are green.
+    
     colors = [
         "#DC2626" if value < 0 else "#16A34A"
         for value in category_chart["total_profit"]
@@ -298,7 +297,7 @@ try:
     fig.savefig(charts_folder / "category_profit.png", dpi=180)
     plt.close(fig)
 
-    # ---------- Chart 3: Top 10 products by profit ----------
+    # --- Chart 3: top 10 products by profit ---
     products_chart = df_products.sort_values("total_profit")
 
     fig, ax = plt.subplots(figsize=(11, 6))
@@ -327,7 +326,7 @@ try:
     fig.savefig(charts_folder / "top_products_by_profit.png", dpi=180)
     plt.close(fig)
 
-    # ---------- Chart 4: Monthly sales and profit ----------
+    # --- Chart 4: monthly sales and profit ---
     df_monthly["order_month"] = pd.to_datetime(df_monthly["order_month"])
 
     fig, ax_sales = plt.subplots(figsize=(12, 6))
@@ -372,7 +371,6 @@ try:
     plt.close(fig)
 
 finally:
-    # Always close the database connection after the script finishes.
     connection.close()
 
 
